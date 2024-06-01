@@ -1,43 +1,26 @@
-version: "3"
-
-networks:
-  kafka-network:
-    driver: bridge
+version: '3.8'
 
 services:
   zookeeper:
-    image: 'bitnami/zookeeper:latest'
-    ports:
-      - '2181:2181'
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
-    networks:
-      - kafka-network
+    image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper
-  kafka:
-    image: 'bitnami/kafka:latest'
-    ports:
-      - '9092:9092'
     environment:
-      - KAFKA_BROKER_ID=1
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-    networks:
-      - kafka-network
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
     container_name: kafka
     depends_on:
       - zookeeper
-  postgres:
-    image: 'bitnami/postgresql:latest'
     ports:
-      - '5431:5431'
+      - "9092:9092"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123
-      - POSTGRES_DATABASE=postgres
-    volumes:
-      - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
-    networks:
-      - kafka-network
-    container_name: postgres
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
